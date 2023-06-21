@@ -1,232 +1,171 @@
 {
-    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "location": {
-            "type": "string"
+        "strmerram0623Type": {
+            "type": "string",
+            "defaultValue": "Standard_LRS",
+            "allowedValues": [
+                "Standard_LRS",
+                "Standard_ZRS",
+                "Standard_GRS",
+                "Standard_RAGRS",
+                "Premium_LRS"
+            ]
         },
-        "networkInterfaceName": {
-            "type": "string"
+        "merram0623Name": {
+            "type": "string",
+            "minLength": 1
         },
-        "enableAcceleratedNetworking": {
-            "type": "bool"
+        "merram0623AdminUserName": {
+            "type": "string",
+            "minLength": 1
         },
-        "networkSecurityGroupName": {
-            "type": "string"
+        "merram0623AdminPassword": {
+            "type": "securestring"
         },
-        "networkSecurityGroupRules": {
-            "type": "array"
-        },
-        "subnetName": {
-            "type": "string"
-        },
-        "virtualNetworkName": {
-            "type": "string"
-        },
-        "addressPrefixes": {
-            "type": "array"
-        },
-        "subnets": {
-            "type": "array"
-        },
-        "publicIpAddressName": {
-            "type": "string"
-        },
-        "publicIpAddressType": {
-            "type": "string"
-        },
-        "publicIpAddressSku": {
-            "type": "string"
-        },
-        "pipDeleteOption": {
-            "type": "string"
-        },
-        "virtualMachineName": {
-            "type": "string"
-        },
-        "virtualMachineComputerName": {
-            "type": "string"
-        },
-        "virtualMachineRG": {
-            "type": "string"
-        },
-        "osDiskType": {
-            "type": "string"
-        },
-        "osDiskDeleteOption": {
-            "type": "string"
-        },
-        "virtualMachineSize": {
-            "type": "string"
-        },
-        "nicDeleteOption": {
-            "type": "string"
-        },
-        "adminUsername": {
-            "type": "string"
-        },
-        "adminPassword": {
-            "type": "secureString"
-        },
-        "patchMode": {
-            "type": "string"
-        },
-        "enableHotpatching": {
-            "type": "bool"
-        },
-        "securityType": {
-            "type": "string"
-        },
-        "secureBoot": {
-            "type": "bool"
-        },
-        "vTPM": {
-            "type": "bool"
+        "merram0623WindowsOSVersion": {
+            "type": "string",
+            "defaultValue": "2012-R2-Datacenter",
+            "allowedValues": [
+                "2008-R2-SP1",
+                "2012-Datacenter",
+                "2012-R2-Datacenter",
+                "Windows-Server-Technical-Preview"
+            ]
         }
-    },
-    "variables": {
-        "nsgId": "[resourceId(resourceGroup().name, 'Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroupName'))]",
-        "vnetName": "[parameters('virtualNetworkName')]",
-        "vnetId": "[resourceId(resourceGroup().name,'Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
-        "subnetRef": "[concat(variables('vnetId'), '/subnets/', parameters('subnetName'))]"
     },
     "resources": [
         {
-            "name": "[parameters('networkInterfaceName')]",
+            "name": "vnmerram0623",
+            "type": "Microsoft.Network/virtualNetworks",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2015-06-15",
+            "dependsOn": [],
+            "tags": {
+                "displayName": "vnmerram0623"
+            },
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[variables('vnmerram0623Prefix')]"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[variables('vnmerram0623Subnet1Name')]",
+                        "properties": {
+                            "addressPrefix": "[variables('vnmerram0623Subnet1Prefix')]"
+                        }
+                    },
+                    {
+                        "name": "[variables('vnmerram0623Subnet2Name')]",
+                        "properties": {
+                            "addressPrefix": "[variables('vnmerram0623Subnet2Prefix')]"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "[variables('strmerram0623Name')]",
+            "type": "Microsoft.Storage/storageAccounts",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2015-06-15",
+            "dependsOn": [],
+            "tags": {
+                "displayName": "strmerram0623"
+            },
+            "properties": {
+                "accountType": "[parameters('strmerram0623Type')]"
+            }
+        },
+        {
+            "name": "[variables('merram0623NicName')]",
             "type": "Microsoft.Network/networkInterfaces",
-            "apiVersion": "2021-08-01",
-            "location": "[parameters('location')]",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2015-06-15",
             "dependsOn": [
-                "[concat('Microsoft.Network/networkSecurityGroups/', parameters('networkSecurityGroupName'))]",
-                "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
-                "[concat('Microsoft.Network/publicIpAddresses/', parameters('publicIpAddressName'))]"
+                "[concat('Microsoft.Network/virtualNetworks/', 'vnmerram0623')]"
             ],
+            "tags": {
+                "displayName": "merram0623Nic"
+            },
             "properties": {
                 "ipConfigurations": [
                     {
                         "name": "ipconfig1",
                         "properties": {
-                            "subnet": {
-                                "id": "[variables('subnetRef')]"
-                            },
                             "privateIPAllocationMethod": "Dynamic",
-                            "publicIpAddress": {
-                                "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/publicIpAddresses', parameters('publicIpAddressName'))]",
-                                "properties": {
-                                    "deleteOption": "[parameters('pipDeleteOption')]"
-                                }
+                            "subnet": {
+                                "id": "[variables('merram0623SubnetRef')]"
                             }
                         }
                     }
-                ],
-                "enableAcceleratedNetworking": "[parameters('enableAcceleratedNetworking')]",
-                "networkSecurityGroup": {
-                    "id": "[variables('nsgId')]"
-                }
+                ]
             }
         },
         {
-            "name": "[parameters('networkSecurityGroupName')]",
-            "type": "Microsoft.Network/networkSecurityGroups",
-            "apiVersion": "2019-02-01",
-            "location": "[parameters('location')]",
-            "properties": {
-                "securityRules": "[parameters('networkSecurityGroupRules')]"
-            }
-        },
-        {
-            "name": "[parameters('virtualNetworkName')]",
-            "type": "Microsoft.Network/virtualNetworks",
-            "apiVersion": "2021-01-01",
-            "location": "[parameters('location')]",
-            "properties": {
-                "addressSpace": {
-                    "addressPrefixes": "[parameters('addressPrefixes')]"
-                },
-                "subnets": "[parameters('subnets')]"
-            }
-        },
-        {
-            "name": "[parameters('publicIpAddressName')]",
-            "type": "Microsoft.Network/publicIpAddresses",
-            "apiVersion": "2020-08-01",
-            "location": "[parameters('location')]",
-            "properties": {
-                "publicIpAllocationMethod": "[parameters('publicIpAddressType')]"
-            },
-            "sku": {
-                "name": "[parameters('publicIpAddressSku')]"
-            }
-        },
-        {
-            "name": "[parameters('virtualMachineName')]",
+            "name": "[parameters('merram0623Name')]",
             "type": "Microsoft.Compute/virtualMachines",
-            "apiVersion": "2022-03-01",
-            "location": "[parameters('location')]",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2015-06-15",
             "dependsOn": [
-                "[concat('Microsoft.Network/networkInterfaces/', parameters('networkInterfaceName'))]"
+                "[concat('Microsoft.Storage/storageAccounts/', variables('strmerram0623Name'))]",
+                "[concat('Microsoft.Network/networkInterfaces/', variables('merram0623NicName'))]"
             ],
+            "tags": {
+                "displayName": "merram0623"
+            },
             "properties": {
                 "hardwareProfile": {
-                    "vmSize": "[parameters('virtualMachineSize')]"
+                    "vmSize": "[variables('merram0623VmSize')]"
+                },
+                "osProfile": {
+                    "computerName": "[parameters('merram0623Name')]",
+                    "adminUsername": "[parameters('merram0623AdminUsername')]",
+                    "adminPassword": "[parameters('merram0623AdminPassword')]"
                 },
                 "storageProfile": {
-                    "osDisk": {
-                        "createOption": "fromImage",
-                        "managedDisk": {
-                            "storageAccountType": "[parameters('osDiskType')]"
-                        },
-                        "deleteOption": "[parameters('osDiskDeleteOption')]"
-                    },
                     "imageReference": {
-                        "publisher": "MicrosoftWindowsServer",
-                        "offer": "WindowsServer",
-                        "sku": "2019-datacenter-gensecond",
+                        "publisher": "[variables('merram0623ImagePublisher')]",
+                        "offer": "[variables('merram0623ImageOffer')]",
+                        "sku": "[parameters('merram0623WindowsOSVersion')]",
                         "version": "latest"
+                    },
+                    "osDisk": {
+                        "name": "merram0623OSDisk",
+                        "vhd": {
+                            "uri": "[concat('http://', variables('strmerram0623Name'), '.blob.core.windows.net/', variables('merram0623StorageAccountContainerName'), '/', variables('merram0623OSDiskName'), '.vhd')]"
+                        },
+                        "caching": "ReadWrite",
+                        "createOption": "FromImage"
                     }
                 },
                 "networkProfile": {
                     "networkInterfaces": [
                         {
-                            "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaceName'))]",
-                            "properties": {
-                                "deleteOption": "[parameters('nicDeleteOption')]"
-                            }
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('merram0623NicName'))]"
                         }
                     ]
-                },
-                "osProfile": {
-                    "computerName": "[parameters('virtualMachineComputerName')]",
-                    "adminUsername": "[parameters('adminUsername')]",
-                    "adminPassword": "[parameters('adminPassword')]",
-                    "windowsConfiguration": {
-                        "enableAutomaticUpdates": true,
-                        "provisionVmAgent": true,
-                        "patchSettings": {
-                            "enableHotpatching": "[parameters('enableHotpatching')]",
-                            "patchMode": "[parameters('patchMode')]"
-                        }
-                    }
-                },
-                "securityProfile": {
-                    "securityType": "[parameters('securityType')]",
-                    "uefiSettings": {
-                        "secureBootEnabled": "[parameters('secureBoot')]",
-                        "vTpmEnabled": "[parameters('vTPM')]"
-                    }
-                },
-                "diagnosticsProfile": {
-                    "bootDiagnostics": {
-                        "enabled": true
-                    }
                 }
             }
         }
     ],
-    "outputs": {
-        "adminUsername": {
-            "type": "string",
-            "value": "[parameters('adminUsername')]"
-        }
+    "variables": {
+        "vnmerram0623Prefix": "10.0.0.0/16",
+        "vnmerram0623Subnet1Name": "Subnet-1",
+        "vnmerram0623Subnet1Prefix": "10.0.0.0/24",
+        "vnmerram0623Subnet2Name": "Subnet-2",
+        "vnmerram0623Subnet2Prefix": "10.0.1.0/24",
+        "strmerram0623Name": "[concat('strmerram0623', uniqueString(resourceGroup().id))]",
+        "merram0623ImagePublisher": "MicrosoftWindowsServer",
+        "merram0623ImageOffer": "WindowsServer",
+        "merram0623OSDiskName": "merram0623OSDisk",
+        "merram0623VmSize": "Standard_D1",
+        "merram0623VnetID": "[resourceId('Microsoft.Network/virtualNetworks', 'vnmerram0623')]",
+        "merram0623SubnetRef": "[concat(variables('merram0623VnetID'), '/subnets/', variables('vnmerram0623Subnet1Name'))]",
+        "merram0623StorageAccountContainerName": "vhds",
+        "merram0623NicName": "[concat(parameters('merram0623Name'), 'NetworkInterface')]"
     }
 }
